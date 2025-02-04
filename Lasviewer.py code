@@ -6,16 +6,14 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
 
-# Define global variables
-file_data = {}  # Dictionary to store LAS data for each file
-selected_curves = {}  # Store selected curves for each file
-curve_checkbuttons = {}  # Store checkbuttons widgets
+file_data = {}  
+selected_curves = {}  
+curve_checkbuttons = {}  
 fig, ax = None, None
 las_content_text = None
-notebook = None  # Global notebook object
+notebook = None  
 
 def load_las_files():
-    """Prompt the user to select multiple LAS files."""
     file_paths = filedialog.askopenfilenames(filetypes=[("LAS files", "*.las")])
     if not file_paths:
         messagebox.showerror("Error", "No files selected.")
@@ -28,14 +26,13 @@ def load_las_files():
         return None
 
 def plot_two_curves(notebook):
-    """Plot two curves from different LAS files and display in the graph tab."""
     global file_data, selected_curves, fig, ax
 
     curves_to_plot = []
     for file, curve_vars in selected_curves.items():
         curves_in_file = []
         for curve_var in curve_vars:
-            if curve_var.get() == 1:  # If curve checkbox is selected
+            if curve_var.get() == 1:  
                 df = file_data[file]
                 curve_name = df.columns[curve_vars.index(curve_var)]
                 curves_in_file.append(curve_name)
@@ -43,7 +40,6 @@ def plot_two_curves(notebook):
         if not curves_in_file:
             continue  # Skip files with no selected curves
 
-        # Add selected curves from this file
         for curve_name in curves_in_file:
             df = file_data[file]
             curves_to_plot.append((df.index, df[curve_name], curve_name, file))
@@ -52,7 +48,6 @@ def plot_two_curves(notebook):
         messagebox.showwarning("Warning", "No valid curves selected to plot.")
         return
 
-    # Update the figure in the Graph tab
     fig, ax = plt.subplots(figsize=(10, 6))
     for depth, curve_values, curve_name, file in curves_to_plot:
         ax.plot(curve_values, depth, label=f"{curve_name} ({file.split('/')[-1]})")
@@ -66,13 +61,11 @@ def plot_two_curves(notebook):
     ax.legend()
     ax.grid(True)
 
-    # Clear any existing plots and add the new one to the Graph tab
     for widget in notebook.winfo_children():
         if notebook.tab(widget, "text") == "Graph":
             for child in widget.winfo_children():
                 child.destroy()
 
-            # Create the figure with toolbar and canvas
             frame = Frame(widget)
             frame.pack(fill="both", expand=True)
 
@@ -81,15 +74,13 @@ def plot_two_curves(notebook):
             toolbar.update()
             toolbar.pack(side="top", fill="both", expand=True)
 
-            canvas = FigureCanvasTkAgg(fig, master=frame)  # Embed the figure
+            canvas = FigureCanvasTkAgg(fig, master=frame)  
             canvas.get_tk_widget().pack(fill="both", expand=True)
             canvas.draw()
 
 def select_files_and_curves():
-    """Handle file selection and update checkboxes for curves."""
     global file_data, curve_checkbuttons, selected_curves, las_content_text, notebook
 
-    # Load LAS files
     data = load_las_files()
     if not data:
         return
@@ -97,10 +88,8 @@ def select_files_and_curves():
     file_data.update(data)
     file_names = list(file_data.keys())
 
-    # Display the file names in the text widget
     las_content_text.insert(END, "\n" + "\n".join(file_names) + "\n")
 
-    # Update checkbuttons for curve selection
     for file in file_names:
         if file not in curve_checkbuttons:
             # Create a new frame for each file
@@ -122,7 +111,6 @@ def select_files_and_curves():
             selected_curves[file] = curve_vars
 
 def display_help():
-    """Display Help information."""
     messagebox.showinfo("Help", (
         "LAS File Viewer\n\n"
         "This tool allows you to visualize curves from LAS (Log ASCII Standard) files.\n\n"
@@ -134,7 +122,6 @@ def display_help():
     ))
 
 def display_about_me():
-    """Display About Me information."""
     messagebox.showinfo("About Me", (
         "Name: Ranjdar A. Mahmedsalih\n"
         "Geosciences Professional\n"
@@ -142,7 +129,6 @@ def display_about_me():
     ))
 
 def create_graph_tab(notebook):
-    """Create a new tab named 'Graph'."""
     global fig, ax
     graph_frame = Frame(notebook)
     graph_frame.grid_rowconfigure(0, weight=1)
@@ -155,58 +141,48 @@ def create_graph_tab(notebook):
     canvas.get_tk_widget().pack(fill="both", expand=True)
 
 def main():
-    """Main application logic."""
     global curve_checkbuttons, selected_curves, las_content_text, notebook
 
     root = Tk()
     root.title("LAS File Viewer")
     root.geometry("800x600")
 
-    # Apply a modern style
     style = Style()
     style.configure("TButton", font=("Arial", 10), padding=6)
     style.configure("TLabel", font=("Arial", 11))
 
-    # Create menu bar
     menu_bar = Menu(root)
 
-    # File menu
     file_menu = Menu(menu_bar, tearoff=0)
     file_menu.add_command(label="Load LAS File(s)", command=select_files_and_curves)
     file_menu.add_separator()
     file_menu.add_command(label="Exit", command=root.quit)
     menu_bar.add_cascade(label="File", menu=file_menu)
 
-    # Help menu
     help_menu = Menu(menu_bar, tearoff=0)
     help_menu.add_command(label="Help", command=display_help)
     menu_bar.add_cascade(label="Help", menu=help_menu)
 
-    # About menu
     about_menu = Menu(menu_bar, tearoff=0)
     about_menu.add_command(label="About Me", command=display_about_me)
     menu_bar.add_cascade(label="About", menu=about_menu)
 
     root.config(menu=menu_bar)
 
-    # Create notebook for tabs
     notebook = Notebook(root)
     notebook.pack(fill="both", expand=True)
 
-    # Input tab
     input_frame = Frame(notebook)
     input_frame.grid_rowconfigure(0, weight=1)
     input_frame.grid_columnconfigure(0, weight=1)
     notebook.add(input_frame, text="Input")
 
-    # Add a text widget with a scrollbar to display LAS data
     scrollbar = Scrollbar(input_frame, orient=VERTICAL)
     las_content_text = Text(input_frame, wrap="none", yscrollcommand=scrollbar.set, height=30, width=100)
     scrollbar.config(command=las_content_text.yview)
     las_content_text.grid(row=0, column=0, sticky="nsew")
     scrollbar.grid(row=0, column=1, sticky="ns")
 
-    # Create the Graph tab
     create_graph_tab(notebook)
 
     root.mainloop()
